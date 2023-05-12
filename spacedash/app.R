@@ -103,12 +103,12 @@ server <- function(input, output, session) {
   
   observeEvent(input$unload, {
     message(glue::glue("{input$ship_select} heading to market"))
-    dispose_cargo(token, base_url, input$ship_select, contract_summary()$id[[1]])
+    unload_cargo(token, base_url, input$ship_select)
   })
 
   observeEvent(input$operate, {
     message(glue::glue("All ships working against contract {contract_summary()$id[[1]]}"))
-    run_swarm(token, base_url, contract_summary()$id[[1]])
+    run_swarm(token, base_url)
   })
   
   observeEvent(input$navigate, {

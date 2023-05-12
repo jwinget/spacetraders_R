@@ -333,12 +333,18 @@ unload_cargo <- function(token, base_url, ship_id) {
 #' Basic mining loop
 #' 
 #' Mine until cargo hold is full, then unload and repeat
-basic_loop <- function(token, base_url, ship_id, contract_id, belt_waypoint = "X1-DF55-17335A") {
-  contract_fulfilled <- FALSE
-  while(contract_fulfilled == FALSE) {
+#' @param token API agent token
+#' @param base_url base url of the api
+#' @param ship_id A ship id string
+#' @param belt_waypoint Waypoint id for resource waypoint
+#' 
+#' @export
+basic_loop <- function(token, base_url, ship_id, belt_waypoint = "X1-DF55-17335A") {
+  contract_fulfilled <- contracts(token, base_url)$data$fulfilled
+  while(contract_fulfilled != TRUE) {
     Sys.sleep(sample(1:10, 1, replace = TRUE)) # Stagger starts a little
     extract_until_full(token, base_url, ship_id)
-    unload_cargo(token, base_url, ship_id, contract_id)
+    unload_cargo(token, base_url, ship_id)
     navigate(token, base_url, ship_id, belt_waypoint)
     dock(token, base_url, ship_id)
     refuel(token, base_url, ship_id)
@@ -346,7 +352,16 @@ basic_loop <- function(token, base_url, ship_id, contract_id, belt_waypoint = "X
   }
 }
 
-run_swarm <- function(token, base_url, contract_id) {
+#' Run swarm
+#' 
+#' Automate basic mining loop for all ships
+#' @param token API agent token
+#' @param base_url base url of the api
+#' 
+#' @export
+run_swarm <- function(token, base_url) {
+  contract <- contracts(token, base_url)$data
+  contract_id <- contract$id[[1]]
   drones <- ships(token, base_url)$data$symbol
   message(glue::glue("Starting up {paste(drones, collapse = ', ')}"))
   flush.console()
@@ -354,7 +369,5 @@ run_swarm <- function(token, base_url, contract_id) {
   furrr::future_map(drones,
                     ~basic_loop(token = token,
                                 base_url = base_url,
-                                ship_id = .x,
-                                contract_id = contract_id,
-                                wait_nav = TRUE))
+                                ship_id = .x))
 }
