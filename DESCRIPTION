@@ -1,0 +1,23 @@
+Package: spacetraders
+Title: Interface for the spacetraders.io API game
+Version: 0.0.0.9000
+Authors@R: 
+    person("Jason", "Winget", , "jwinget@gmail.com", role = c("aut", "cre"))
+Description: What the package does (one paragraph).
+License: GPL (>= 3)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports: 
+    dplyr,
+    furrr,
+    future,
+    glue,
+    httr,
+    jsonlite,
+    lubridate,
+    nessy,
+    reactable,
+    shiny,
+    tibble,
+    tidyr
