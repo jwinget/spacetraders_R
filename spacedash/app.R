@@ -18,17 +18,17 @@ ui <- cartridge(
   container_with_title(
     "Commands",
     htmlOutput("ship_select_ui"),
+    balloon_container(
+      "Navigation",
+      textInput("waypoint", "WAYPOINT"),
+      actionButton("navigate", "GO")
+    ),
     actionButton("dock", "DOCK"),
     actionButton("refuel", "REFUEL"),
     actionButton("orbit", "ORBIT"),
     actionButton("extract", "EXTRACT"),
     actionButton("unload", "UNLOAD"),
-    actionButton("operate", "OPERATE ALL"),
-    balloon_container(
-      "Navigation",
-      textInput("waypoint", "WAYPOINT"),
-      actionButton("navigate", "GO")
-    )
+    button_primary("operate", "OPERATE ALL")
   )
 )
 
@@ -119,7 +119,7 @@ server <- function(input, output, session) {
 
   observeEvent(input$operate, {
     message(glue::glue("All ships working against contract {contract_summary()$id[[1]]}"))
-    run_swarm(token, base_url)
+    run_swarm(token, base_url, input$waypoint)
   })
 
   observeEvent(input$navigate, {
