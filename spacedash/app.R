@@ -11,8 +11,8 @@ ui <- fluidPage(
     bs_add_rules(
       '@import "https://unpkg.com/nes.css@latest/css/nes.min.css"'
     ),
-  title = "SpaceDash",
-  subtitle = "SpaceTraders.io dashboard",
+  h1("SpaceDash"),
+  h2("SpaceTraders.io dashboard"),
   tagList(
     fluidRow(
       column(2,
@@ -22,15 +22,11 @@ ui <- fluidPage(
              )
             ),
       column(10,
+             fluidRow(
+               column(6,
              mainPanel(
                h2("Commands"),
                htmlOutput("ship_select_ui"),
-               wellPanel(
-                 h3("Navigation"),
-                 textInput("waypoint", "WAYPOINT"),
-                 actionButton("navigate", "GO"),
-                 actionButton("flydock", "GO & DOCK")
-               ),
                actionButton("dock", "DOCK"),
                actionButton("refuel", "REFUEL"),
                actionButton("orbit", "ORBIT"),
@@ -38,8 +34,16 @@ ui <- fluidPage(
                actionButton("unload", "UNLOAD"),
                actionButton("operate", "OPERATE ALL")
              )
-            )
-    ),
+               ),
+             column(6,
+                    wellPanel(
+                      h3("Navigation"),
+                      textInput("waypoint", "WAYPOINT"),
+                      actionButton("navigate", "GO"),
+                      actionButton("flydock", "GO & DOCK")
+                    ))),
+             )
+            ),
     fluidRow(
     mainPanel(
       h2("Ship status"),

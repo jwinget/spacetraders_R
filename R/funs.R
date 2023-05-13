@@ -41,6 +41,30 @@ send_request <- function(method, token, base_url, endpoint, json_body = NULL) {
 
 #---- agent-management ----
 
+#' New agent
+#'
+#' Create a new agent
+#'
+#' @param base_url base url of the api
+#' @param symbol Agent symbol/name
+#'
+#' @export
+new_agent <- function(base_url, symbol, faction = "COSMIC", overwrite = FALSE) {
+  json_body <- list(symbol = symbol,
+                    faction = faction)
+
+  result <- send_request("POST",
+               token, base_url, glue::glue("register"), json_body)
+
+  token <- result$data$token
+
+  if (file.exists("token.txt") & overwrite == FALSE) {
+    break('"token.txt" is present in this directory and you have `overwrite` as FALSE.\nTo overwrite your existing agent, call this command with `overwrite = TRUE`')
+  } else {
+    write.csv(token, file = "token.txt")
+  }
+}
+
 #' Agent info
 #'
 #' Returns information about your agent
