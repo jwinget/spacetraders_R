@@ -436,7 +436,14 @@ unload_cargo <- function(token, base_url, ship_id) {
   message(glue::glue("{current_location} -> {origin_waypoint}"))
   flush.console()
 
-  if(!is.null(current_location) & !is.null(origin_waypoint) & current_location == origin_waypoint) {
+  if(is.null(current_location) | is.null(origin_waypoint)) {
+    # Travel
+    f <- future::future(navigate(token, base_url, ship_id, origin_waypoint))
+    while(!future::resolved(f)) {
+      Sys.sleep(0.5)
+    }
+    nav <- future::value(f)
+  } else if (current_location == origin_waypoint) {
     # Travel
     f <- future::future(navigate(token, base_url, ship_id, origin_waypoint))
     while(!future::resolved(f)) {
@@ -444,6 +451,7 @@ unload_cargo <- function(token, base_url, ship_id) {
     }
     nav <- future::value(f)
   }
+
   message(glue::glue("Cargo run complete!"))
   flush.console()
 }
