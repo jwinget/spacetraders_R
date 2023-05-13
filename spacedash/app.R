@@ -3,32 +3,42 @@ library(nessy)
 ui <- cartridge(
   title = "SpaceDash",
   subtitle = "SpaceTraders.io dashboard",
-  container_with_title(
-    "Credits",
-    textOutput("credit_balance")
-  ),
-  container_with_title(
-    "Ship status",
-    tableOutput("ship_status")
-  ),
-  container_with_title(
-    "Contract status",
-    tableOutput("contracts")
-  ),
-  container_with_title(
-    "Commands",
-    htmlOutput("ship_select_ui"),
-    balloon_container(
-      "Navigation",
-      textInput("waypoint", "WAYPOINT"),
-      actionButton("navigate", "GO")
+  tagList(
+    fluidRow(
+      column(2,
+             container_with_title(
+               "Credits",
+               textOutput("credit_balance")
+             )
+            ),
+      column(10,
+             container_with_title(
+               "Commands",
+               htmlOutput("ship_select_ui"),
+               balloon_container(
+                 "Navigation",
+                 textInput("waypoint", "WAYPOINT"),
+                 actionButton("navigate", "GO")
+               ),
+               actionButton("dock", "DOCK"),
+               actionButton("refuel", "REFUEL"),
+               actionButton("orbit", "ORBIT"),
+               actionButton("extract", "EXTRACT"),
+               actionButton("unload", "UNLOAD"),
+               button_primary("operate", "OPERATE ALL")
+             )
+            )
     ),
-    actionButton("dock", "DOCK"),
-    actionButton("refuel", "REFUEL"),
-    actionButton("orbit", "ORBIT"),
-    actionButton("extract", "EXTRACT"),
-    actionButton("unload", "UNLOAD"),
-    button_primary("operate", "OPERATE ALL")
+    fluidRow(
+    container_with_title(
+      "Ship status",
+      tableOutput("ship_status")
+    )),
+    fluidRow(
+    container_with_title(
+      "Contract status",
+      tableOutput("contracts")
+    ))
   )
 )
 
@@ -119,23 +129,14 @@ server <- function(input, output, session) {
 
   observeEvent(input$operate, {
     message(glue::glue("All ships working against contract {contract_summary()$id[[1]]}"))
-    f <- future::future(
-      run_swarm(token, base_url)
-    )
-    swarm <- future::value(f)
+    run_swarm(token, base_url)
   })
 
   observeEvent(input$navigate, {
     message(glue::glue("{input$ship_select} navigating to {input$waypoint}"))
     ship <- input$ship_select
     waypoint <- input$waypoint
-    f <- future::future(
-      navigate(token, base_url, ship, waypoint)
-    )
-    nav <- future::value(f)
-    while(!future::resolved(f)) {
-      Sys.sleep(0.5)
-    }
+    navigate(token, base_url, ship, waypoint)
   })
 }
 
