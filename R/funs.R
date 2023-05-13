@@ -340,6 +340,22 @@ deliver <- function(token, base_url, ship_id, contract_id, contract_symbol, unit
 }
 
 #---- multi-functions ----
+#' Fly and dock
+#'
+#' Fly a ship to a waypoint and dock there
+#'
+#' @param token API agent token
+#' @param base_url base url of the api
+#' @param ship_id A ship id string
+#' @param waypoint_id Destination waypoint id string
+#'
+#' @export
+fly_and_dock <- function(token, base_url, ship_id, waypoint_id) {
+  navigate(token, base_url, ship_id, waypoint_id)
+  dock(token, base_url, ship_id)
+}
+
+
 #' Extract until full
 #'
 #' Extract resources at the current location until the ship's cargo is full
@@ -430,11 +446,9 @@ unload_cargo <- function(token, base_url, ship_id) {
   message(glue::glue("Returning to {origin_waypoint}"))
   flush.console()
 
-  current_location <- orbit(token, base_url, ship_id)$data$nav$waypointSymbol
+  orbit <- orbit(token, base_url, ship_id)$data
   Sys.sleep(1)
-
-  message(glue::glue("{current_location} -> {origin_waypoint}"))
-  flush.console()
+  current_location <- orbit$nav$waypointSymbol
 
   if(is.null(current_location) | is.null(origin_waypoint)) {
     # Travel
@@ -443,7 +457,9 @@ unload_cargo <- function(token, base_url, ship_id) {
       Sys.sleep(0.5)
     }
     nav <- future::value(f)
-  } else if (current_location == origin_waypoint) {
+  } else if (!current_location == origin_waypoint) {
+    message(glue::glue("{current_location} -> {origin_waypoint}"))
+    flush.console()
     # Travel
     f <- future::future(navigate(token, base_url, ship_id, origin_waypoint))
     while(!future::resolved(f)) {

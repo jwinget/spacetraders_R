@@ -18,7 +18,8 @@ ui <- cartridge(
                balloon_container(
                  "Navigation",
                  textInput("waypoint", "WAYPOINT"),
-                 actionButton("navigate", "GO")
+                 actionButton("navigate", "GO"),
+                 actionButton("flydock", "GO & DOCK")
                ),
                actionButton("dock", "DOCK"),
                actionButton("refuel", "REFUEL"),
@@ -137,6 +138,13 @@ server <- function(input, output, session) {
     ship <- input$ship_select
     waypoint <- input$waypoint
     navigate(token, base_url, ship, waypoint)
+  })
+
+  observeEvent(input$navigate, {
+    message(glue::glue("{input$ship_select} navigating to {input$waypoint} and docking on arrival"))
+    ship <- input$ship_select
+    waypoint <- input$waypoint
+    fly_and_dock(token, base_url, ship, waypoint)
   })
 }
 
