@@ -33,7 +33,7 @@ send_request <- function(method, token, base_url, endpoint, json_body = NULL) {
                      POST = httr::POST(url, headers, body = json_body, encode = "json"),
                      error = stop("Invalid method"))
 
-  Sys.sleep(0.5) # Avoid hitting the limiter
+  Sys.sleep(0.75) # Avoid hitting the limiter
   response |>
     httr::content("text") |>
     jsonlite::fromJSON()

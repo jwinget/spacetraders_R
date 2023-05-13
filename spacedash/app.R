@@ -1,22 +1,32 @@
-library(nessy)
+library(shiny)
+library(bslib)
 
-ui <- cartridge(
+ui <- fluidPage(
+  theme = bs_theme(
+    bg = "#0d0d0d", fg = "#CBE86B", primary = "#FFF",
+    base_font = font_google("Press Start 2P"),
+    code_font = font_google("Press Start 2P"),
+    "font-size-base" = "1rem", "enable-rounded" = FALSE
+  ) |>
+    bs_add_rules(
+      '@import "https://unpkg.com/nes.css@latest/css/nes.min.css"'
+    ),
   title = "SpaceDash",
   subtitle = "SpaceTraders.io dashboard",
   tagList(
     fluidRow(
       column(2,
-             container_with_title(
-               "Credits",
+             wellPanel(
+               h2("Credits"),
                textOutput("credit_balance")
              )
             ),
       column(10,
-             container_with_title(
-               "Commands",
+             mainPanel(
+               h2("Commands"),
                htmlOutput("ship_select_ui"),
-               balloon_container(
-                 "Navigation",
+               wellPanel(
+                 h3("Navigation"),
                  textInput("waypoint", "WAYPOINT"),
                  actionButton("navigate", "GO"),
                  actionButton("flydock", "GO & DOCK")
@@ -26,18 +36,18 @@ ui <- cartridge(
                actionButton("orbit", "ORBIT"),
                actionButton("extract", "EXTRACT"),
                actionButton("unload", "UNLOAD"),
-               button_primary("operate", "OPERATE ALL")
+               actionButton("operate", "OPERATE ALL")
              )
             )
     ),
     fluidRow(
-    container_with_title(
-      "Ship status",
+    mainPanel(
+      h2("Ship status"),
       tableOutput("ship_status")
     )),
     fluidRow(
-    container_with_title(
-      "Contract status",
+    mainPanel(
+      h2("Contract status"),
       tableOutput("contracts")
     ))
   )
@@ -140,7 +150,7 @@ server <- function(input, output, session) {
     navigate(token, base_url, ship, waypoint)
   })
 
-  observeEvent(input$navigate, {
+  observeEvent(input$flydock, {
     message(glue::glue("{input$ship_select} navigating to {input$waypoint} and docking on arrival"))
     ship <- input$ship_select
     waypoint <- input$waypoint
