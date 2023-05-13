@@ -35,7 +35,7 @@ ui <- cartridge(
 server <- function(input, output, session) {
   source(here::here("R", "funs.R"))
 
-  future::plan("multisession", workers = 5)
+  future::plan("multisession")
 
   char_info <- reactive({
     invalidateLater(60006, session)
@@ -119,12 +119,23 @@ server <- function(input, output, session) {
 
   observeEvent(input$operate, {
     message(glue::glue("All ships working against contract {contract_summary()$id[[1]]}"))
-    run_swarm(token, base_url, input$waypoint)
+    f <- future::future(
+      run_swarm(token, base_url)
+    )
+    swarm <- future::value(f)
   })
 
   observeEvent(input$navigate, {
     message(glue::glue("{input$ship_select} navigating to {input$waypoint}"))
-    navigate(token, base_url, input$ship_select, input$waypoint)
+    ship <- input$ship_select
+    waypoint <- input$waypoint
+    f <- future::future(
+      navigate(token, base_url, ship, waypoint)
+    )
+    nav <- future::value(f)
+    while(!future::resolved(f)) {
+      Sys.sleep(0.5)
+    }
   })
 }
 

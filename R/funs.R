@@ -259,15 +259,20 @@ deliver <- function(token, base_url, ship_id, contract_id, contract_symbol, unit
 #'
 #' @export
 extract_until_full <- function(token, base_url, ship_id) {
-  f <- future::future(
-    extract(token, base_url, ship_id)
-  )
-
-  cargo <- future::value(f)$data$cargo
+  future::plan("multisession")
+  cargo <- ship_cargo(token, base_url, ship_id)$data$cargo
+  message(glue::glue("Capacity: {cargo$capacity}, Units: {cargo$units}"))
+  flush.console()
 
   if (cargo$capacity == cargo$units) {
     return(TRUE)
   } else {
+    f <- future::future(
+      extract(token, base_url, ship_id)
+    )
+    future::value(f) |>
+      print()
+
     extract_until_full(token, base_url, ship_id)
   }
 }
@@ -282,6 +287,7 @@ extract_until_full <- function(token, base_url, ship_id) {
 #'
 #' @export
 unload_cargo <- function(token, base_url, ship_id) {
+  future::plan("multisession")
   my_contracts <- contracts(token, base_url)$data
   to_deliver <- dplyr::bind_rows(my_contracts$terms$deliver)
   to_deliver$contract_id <- my_contracts$id
@@ -297,29 +303,30 @@ unload_cargo <- function(token, base_url, ship_id) {
     flush.console()
     d <- dplyr::left_join(to_deliver, cargo, by = c("tradeSymbol" = "symbol"))
     # Operate over each contract
-    purrr::pmap(list(contract = d$contract_id,
-                     symbol = d$tradeSymbol,
-                     destination = d$destinationSymbol,
-                     units = d$units), ~{
+    deliveries <- list(contract_id = d$contract_id,
+                       contract_symbol = d$tradeSymbol,
+                       waypoint_id = d$destinationSymbol,
+                       units = d$units)
+    purrr::pmap(deliveries, function(contract_id, contract_symbol, waypoint_id, units) {
                        # Travel to drop-off
-                       message(glue::glue("Flying to lovely {destination}"))
+                       message(glue::glue("Flying to lovely {waypoint_id}"))
                        flush.console()
-                       f <- future::future(navigate(token, base_url, ship_id, destination))
+                       f <- future::future(navigate(token, base_url, ship_id, waypoint_id))
                        nav <- future::value(f)
                        while(!future::resolved(f)) {
                          Sys.sleep(0.5)
                        }
 
                        # Dock, fuel up, and deliver the goods
-                       message(glue::glue("Dropping off {symbol} at {destination}"))
+                       message(glue::glue("Dropping off {contract_symbol} at {waypoint_id}"))
                        flush.console()
                        dock(token, base_url, ship_id)
                        refuel(token, base_url, ship_id)
-                       deliver(token, base_url, ship_id, contract, symbol, units)
+                       deliver(token, base_url, ship_id, contract_id, contract_symbol, units)
                        orbit(token, base_url, ship_id)
                      })
   }
-
+  Sys.sleep(0.5)
   # Sell other stuff
   dock(token, base_url, ship_id)
   message(glue::glue("Selling stuff"))
@@ -329,7 +336,7 @@ unload_cargo <- function(token, base_url, ship_id) {
     print(glue::glue("Selling {.x}"))
     sell(token, base_url, ship_id, .x, as.integer(.y))
   })
-
+  Sys.sleep(0.5)
   # Orbit and return to original waypoint
   message(glue::glue("Returning to {origin_waypoint}"))
   flush.console()
@@ -358,6 +365,7 @@ unload_cargo <- function(token, base_url, ship_id) {
 #'
 #' @export
 extraction_loop <- function(token, base_url, ship_id) {
+  future::plan("multisession")
   # Extract until full
   message(glue::glue("Extracting"))
   flush.console()
