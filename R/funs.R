@@ -212,7 +212,16 @@ navigate <- function(token, base_url, ship_id, waypoint_id) {
                json_body)
 
 
-  Sys.sleep(120)
+  departure <- nav$data$nav$route$departureTime |>
+    lubridate::as_datetime() |>
+    lubridate::seconds()
+
+  arrival <- nav$data$nav$route$arrival |>
+    lubridate::as_datetime() |>
+    lubridate::seconds()
+
+  Sys.sleep(arrival-departure + 1)
+
 }
 
 #---- market ----
@@ -286,7 +295,8 @@ deliver <- function(token, base_url, ship_id, contract_id, contract_symbol, unit
 #' @export
 fly_and_dock <- function(token, base_url, ship_id, waypoint_id) {
   f <- future::future(
-    navigate(token, base_url, ship_id, waypoint_id)
+    navigate(token, base_url, ship_id, waypoint_id),
+    seed = TRUE
   )
   while(!future::resolved(f)) {
     Sys.sleep(1)
@@ -314,7 +324,8 @@ extract_until_full <- function(token, base_url, ship_id) {
     return(TRUE)
   } else {
     f <- future::future(
-      extract(token, base_url, ship_id)
+      extract(token, base_url, ship_id),
+      seed = TRUE
     )
     while (!future::resolved(f)) {
       Sys.sleep(1)
@@ -358,7 +369,8 @@ unload_cargo <- function(token, base_url, ship_id) {
       if(!waypoint_id == origin_waypoint) {
         message(glue::glue("Flying to lovely {waypoint_id}"))
         flush.console()
-        f <- future::future(navigate(token, base_url, ship_id, waypoint_id))
+        f <- future::future(navigate(token, base_url, ship_id, waypoint_id),
+                            seed = TRUE)
         while(!future::resolved(f)) {
           Sys.sleep(1)
         }
@@ -387,13 +399,15 @@ unload_cargo <- function(token, base_url, ship_id) {
   message(glue::glue("Returning to {origin_waypoint}"))
   flush.console()
 
-  orbit <- future::future(orbit(token, base_url, ship_id)$data) |> future::value()
+  orbit <- future::future(orbit(token, base_url, ship_id)$data,
+                          seed = TRUE) |> future::value()
 
   current_location <- orbit$nav$waypointSymbol
 
   if(is.null(current_location) | is.null(origin_waypoint)) {
     # Travel
-    f <- future::future(navigate(token, base_url, ship_id, origin_waypoint))
+    f <- future::future(navigate(token, base_url, ship_id, origin_waypoint),
+                        seed = TRUE)
     while(!future::resolved(f)) {
       Sys.sleep(0.5)
     }
@@ -402,7 +416,8 @@ unload_cargo <- function(token, base_url, ship_id) {
     message(glue::glue("{current_location} -> {origin_waypoint}"))
     flush.console()
     # Travel
-    f <- future::future(navigate(token, base_url, ship_id, origin_waypoint))
+    f <- future::future(navigate(token, base_url, ship_id, origin_waypoint),
+                        seed = TRUE)
     while(!future::resolved(f)) {
       Sys.sleep(0.5)
     }
@@ -425,14 +440,16 @@ unload_cargo <- function(token, base_url, ship_id) {
 #' @export
 extraction_loop <- function(token, base_url, ship_id) {
   # Extract until full
-  message(glue::glue("Extracting"))
-  flush.console()
-  extract_until_full(token, base_url, ship_id)
+  while(TRUE) {
+    message(glue::glue("Extracting"))
+    flush.console()
+    extract_until_full(token, base_url, ship_id)
 
-  # Deliver/sell cargo
-  message(glue::glue("Delivering"))
-  flush.console()
-  unload_cargo(token, base_url, ship_id)
+    # Deliver/sell cargo
+    message(glue::glue("Delivering"))
+    flush.console()
+    unload_cargo(token, base_url, ship_id)
+  }
 }
 
 
