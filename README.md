@@ -6,6 +6,8 @@
 
 A janky interface for spacetraders.io, written in R/shiny
 
+![Shiny interface](https://github.com/jwinget/spacetraders/blob/main/spacedash/www/img/screenshot.PNG?raw=true)
+
 ## Installation
 
 I don't know, I haven't tested it.
