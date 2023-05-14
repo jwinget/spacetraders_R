@@ -445,12 +445,23 @@ extraction_loop <- function(token, base_url, ship_id) {
   while(TRUE) {
     message(glue::glue("Extracting"))
     flush.console()
-    extract_until_full(token, base_url, ship_id)
+    f <- future::future(
+      extract_until_full(token, base_url, ship_id),
+    seed = TRUE)
+    while(!future::resolved(f)) {
+      Sys.sleep(0.5)
+    }
 
     # Deliver/sell cargo
     message(glue::glue("Delivering"))
     flush.console()
-    unload_cargo(token, base_url, ship_id)
+    f <- future::future(
+      unload_cargo(token, base_url, ship_id),
+      seed = TRUE
+    )
+    while(!future::resolved(f)) {
+      Sys.sleep(0.5)
+    }
   }
 }
 
