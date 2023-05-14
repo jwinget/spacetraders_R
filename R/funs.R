@@ -1,5 +1,4 @@
 # Functions for spacetraders.io
-library(future)
 
 #---- constants ----
 
@@ -33,7 +32,7 @@ send_request <- function(method, token, base_url, endpoint, json_body = NULL) {
                      POST = httr::POST(url, headers, body = json_body, encode = "json"),
                      error = stop("Invalid method"))
 
-  Sys.sleep(0.75) # Avoid hitting the limiter
+  Sys.sleep(0.77) # Avoid hitting the limiter
   response |>
     httr::content("text") |>
     jsonlite::fromJSON()
@@ -406,8 +405,9 @@ extract_until_full <- function(token, base_url, ship_id) {
     f <- future::future(
       extract(token, base_url, ship_id)
     )
-    future::value(f) |>
-      print()
+    while (!future::resolved(f)) {
+      Sys.sleep(1)
+    }
 
     extract_until_full(token, base_url, ship_id)
   }
@@ -516,25 +516,12 @@ extraction_loop <- function(token, base_url, ship_id) {
   # Extract until full
   message(glue::glue("Extracting"))
   flush.console()
-  f <- future::future(
-    extract_until_full(token, base_url, ship_id)
-  )
-  while(!future::resolved(f)) {
-    Sys.sleep(0.2)
-  }
-  extraction <- future::value(f)
+  extract_until_full(token, base_url, ship_id)
 
   # Deliver/sell cargo
   message(glue::glue("Delivering"))
   flush.console()
-  f <- future::future(
-    unload_cargo(token, base_url, ship_id)
-  )
-  while(!future::resolved(f)) {
-    Sys.sleep(0.2)
-  }
-  delivery <- future::value(f)
-
+  unload_cargo(token, base_url, ship_id)
 }
 
 
