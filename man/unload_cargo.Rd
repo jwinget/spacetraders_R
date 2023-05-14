@@ -12,8 +12,6 @@ unload_cargo(token, base_url, ship_id)
 \item{base_url}{base url of the api}
 
 \item{ship_id}{A ship id string}
-
-\item{contract_id}{A contract id string}
 }
 \description{
 Deliver contract items and sell non-contract items
