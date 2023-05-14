@@ -375,7 +375,13 @@ deliver <- function(token, base_url, ship_id, contract_id, contract_symbol, unit
 #'
 #' @export
 fly_and_dock <- function(token, base_url, ship_id, waypoint_id) {
-  navigate(token, base_url, ship_id, waypoint_id)
+  f <- future::future(
+    navigate(token, base_url, ship_id, waypoint_id)
+  )
+  while(!future::resolved(f)) {
+    Sys.sleep(1)
+  }
+  nav <- value(f)
   dock(token, base_url, ship_id)
 }
 
@@ -437,23 +443,23 @@ unload_cargo <- function(token, base_url, ship_id) {
                        waypoint_id = d$destinationSymbol,
                        units = d$units)
     purrr::pmap(deliveries, function(contract_id, contract_symbol, waypoint_id, units) {
-                       # Travel to drop-off
-                       message(glue::glue("Flying to lovely {waypoint_id}"))
-                       flush.console()
-                       f <- future::future(navigate(token, base_url, ship_id, waypoint_id))
-                       nav <- future::value(f)
-                       while(!future::resolved(f)) {
-                         Sys.sleep(0.5)
-                       }
-
-                       # Dock, fuel up, and deliver the goods
-                       message(glue::glue("Dropping off {contract_symbol} at {waypoint_id}"))
-                       flush.console()
-                       dock(token, base_url, ship_id)
-                       refuel(token, base_url, ship_id)
-                       deliver(token, base_url, ship_id, contract_id, contract_symbol, units)
-                       orbit(token, base_url, ship_id)
-                     })
+      # Travel to drop-off
+      if(!waypoint_id == origin_waypoint) {
+        message(glue::glue("Flying to lovely {waypoint_id}"))
+        flush.console()
+        f <- future::future(navigate(token, base_url, ship_id, waypoint_id))
+        while(!future::resolved(f)) {
+          Sys.sleep(1)
+        }
+        nav <- future::value(f)
+      }
+      dock(token, base_url, ship_id)
+      # Dock, fuel up, and deliver the goods
+      message(glue::glue("Dropping off {contract_symbol} at {waypoint_id}"))
+      flush.console()
+      refuel(token, base_url, ship_id)
+      deliver(token, base_url, ship_id, contract_id, contract_symbol, units)
+    })
   }
   Sys.sleep(0.5)
   # Sell other stuff
@@ -461,7 +467,7 @@ unload_cargo <- function(token, base_url, ship_id) {
   message(glue::glue("Selling stuff"))
   flush.console()
   cargo <- ship_cargo(token, base_url, ship_id)$data$cargo$inventory
-  furrr::future_map2(cargo$symbol, cargo$units, ~{
+  purrr::map2(cargo$symbol, cargo$units, ~{
     print(glue::glue("Selling {.x}"))
     sell(token, base_url, ship_id, .x, as.integer(.y))
   })
@@ -470,8 +476,8 @@ unload_cargo <- function(token, base_url, ship_id) {
   message(glue::glue("Returning to {origin_waypoint}"))
   flush.console()
 
-  orbit <- orbit(token, base_url, ship_id)$data
-  Sys.sleep(1)
+  orbit <- future::future(orbit(token, base_url, ship_id)$data) |> future::value()
+
   current_location <- orbit$nav$waypointSymbol
 
   if(is.null(current_location) | is.null(origin_waypoint)) {

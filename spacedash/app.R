@@ -11,20 +11,13 @@ ui <- fluidPage(
     bs_add_rules(
       '@import "https://unpkg.com/nes.css@latest/css/nes.min.css"'
     ),
-  h1("SpaceDash"),
-  h2("SpaceTraders.io dashboard"),
+  img(src = "img/rock_crystalsLargeB_SE.png",
+      style = "display: inline;"),
+  h1("SpaceDash", style = "display: inline;"),
   tagList(
     fluidRow(
-      column(2,
+      column(6,
              wellPanel(
-               h2("Credits"),
-               textOutput("credit_balance")
-             )
-            ),
-      column(10,
-             fluidRow(
-               column(6,
-             mainPanel(
                h2("Commands"),
                htmlOutput("ship_select_ui"),
                actionButton("dock", "DOCK"),
@@ -34,26 +27,37 @@ ui <- fluidPage(
                actionButton("unload", "UNLOAD"),
                actionButton("operate", "OPERATE ALL")
              )
-               ),
-             column(6,
-                    wellPanel(
-                      h3("Navigation"),
-                      textInput("waypoint", "WAYPOINT"),
-                      actionButton("navigate", "GO"),
-                      actionButton("flydock", "GO & DOCK")
-                    ))),
-             )
-            ),
-    fluidRow(
-    mainPanel(
-      h2("Ship status"),
+      ),
+      column(6,
+             wellPanel(
+               img(src = "img/satelliteDish_large_SE.png",
+                   style = "display: inline; height: 50px"),
+               h3("Navigation",
+                  style = "display: inline;"),
+               textInput("waypoint", "WAYPOINT"),
+               actionButton("navigate", "GO"),
+               actionButton("flydock", "GO & DOCK")
+             )))
+  ),
+  fluidRow(
+    wellPanel(
+      img(src = "img/craft_miner_SE.png",
+          style = "display: inline; height: 50px;"),
+      h2("Ship status", style = "display: inline;"),
       tableOutput("ship_status")
     )),
-    fluidRow(
-    mainPanel(
-      h2("Contract status"),
-      tableOutput("contracts")
-    ))
+  fluidRow(
+    column(8,
+           wellPanel(
+             h2("Contract status"),
+             tableOutput("contracts")
+           ),
+           column(4,
+                  wellPanel(
+                    h2("Credits"),
+                    textOutput("credit_balance")
+                  )
+           ))
   )
 )
 
