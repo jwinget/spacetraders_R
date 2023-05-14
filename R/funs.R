@@ -32,7 +32,7 @@ send_request <- function(method, token, base_url, endpoint, json_body = NULL) {
                      POST = httr::POST(url, headers, body = json_body, encode = "json"),
                      error = stop("Invalid method"))
 
-  Sys.sleep(0.77) # Avoid hitting the limiter
+  Sys.sleep(0.5 + 0.2*sample(1:5, 1, replace = TRUE)) # Avoid hitting the limiter
   response |>
     httr::content("text") |>
     jsonlite::fromJSON()
@@ -123,95 +123,6 @@ contracts <- function(token, base_url) {
                token,
                base_url,
                glue::glue("my/contracts"))
-}
-
-#---- scheduling ----
-# WIP
-
-#' API/Command scheduling
-#'
-#' Iterates no faster than once a second
-#'
-#' @export
-op_cycle <- function(...) {
-  # Get the time
-  the_time <- Sys.time()
-
-  # Do stuff every second
-  d <- update_data(token, base_url, current_data)
-  to_do <- process_data(token, base_url, d)
-  execute_commands(token, base_url, d)
-
-  # Wait until at least a second has elapsed
-  now <- Sys.time()
-  cycle_time <- now - the_time
-  if (cycle_time < 1) {
-    Sys.sleep(1 - cycle_time)
-  }
-}
-
-#' Update unless error
-#'
-#' Try to query the API. Return updated data if the query succeds
-#' otherwise keep original data
-#' @param token API agent token
-#' @param base_url base url of the api
-#'
-#' @export
-update_unless_error <- function(method, token, base_url, endpoint, d = NULL, json_body = NULL) {
-  res <- send_request(method, token, base_url, endpoint, json_body)
-
-  if (res$error) {
-    # Don't update
-    return(d)
-  } else {
-    return(res$data)
-  }
-}
-
-
-#' Query API
-#'
-#' Pull down data at once for processing
-#'
-#' @param token API agent token
-#' @param base_url base url of the api
-#'
-#' @export
-update_data <- function(token, base_url, current_data) {
-  # This might be slowed by API limits, so don't run more than once every 10s
-  agent_data %<-% update_unless_error(token,
-                                    base_url,
-                                    endpoint = "my/agent",
-                                    d = current_data$agent)
-
-  contract_data %<-% update_unless_error(token,
-                                   base_url,
-                                   endpoint = "my/contracts",
-                                   d = current_data$contracts)
-
-  ship_data %<-% update_unless_error(token,
-                                   base_url,
-                                   endpoint = "my/ships",
-                                   d = current_data$ships)
-
-  return(list(
-    agent = agent_data,
-    contracts = contract_data,
-    ships = ship_data
-  ))
-}
-
-#' Process data retrieved from API
-#'
-#' @param token API agent token
-#' @param base_url base url of the api
-#'
-#' @export
-process_data <- function(token, base_url, d) {
-  # Contract status
-
-  # Ship status
 }
 
 #---- navigation-and-operation ----
