@@ -220,7 +220,9 @@ navigate <- function(token, base_url, ship_id, waypoint_id) {
     lubridate::as_datetime() |>
     lubridate::seconds()
 
-  Sys.sleep(arrival-departure + 1)
+  if (!is.null(departure) & !is.null(arrival)) {
+    Sys.sleep(arrival-departure + 1)
+  }
 
 }
 
