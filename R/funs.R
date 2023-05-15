@@ -94,6 +94,27 @@ ships <- function(token, base_url) {
                glue::glue("my/ships"))
 }
 
+#' Buy a ship
+#'
+#' Buy a ship from the market
+#'
+#' @param token API agent token
+#' @param base_url base url of the api
+#' @param ship_type A ship type string
+#' @param purchase_waypoint The waypoint to purchase from
+#'
+#' @export
+buy_ship <- function(token, base_url, ship_type, purchase_waypoint) {
+  send_request("POST",
+               token,
+               base_url,
+               endpoint = "my/ships",
+               json_body = list(
+                 "shipType" = ship_type,
+                 "waypointSymbol" = purchase_waypoint
+               ))
+}
+
 #' Ship cargo
 #'
 #' Get information about the cargo of a ship
@@ -212,16 +233,21 @@ navigate <- function(token, base_url, ship_id, waypoint_id) {
                json_body)
 
 
-  departure <- nav$data$nav$route$departureTime |>
-    lubridate::as_datetime() |>
-    lubridate::seconds()
+  departure <- nav$data$nav$route$departureTime
 
-  arrival <- nav$data$nav$route$arrival |>
-    lubridate::as_datetime() |>
-    lubridate::seconds()
+  arrival <- nav$data$nav$route$arrival
 
   if (!is.null(departure) & !is.null(arrival)) {
+    departure <- departure |>
+      lubridate::as_datetime() |>
+      lubridate::seconds()
+
+    arrival <- arrival |>
+      lubridate::as_datetime() |>
+      lubridate::seconds()
     Sys.sleep(arrival-departure + 1)
+  } else {
+    Sys.sleep(1)
   }
 
 }
@@ -296,14 +322,7 @@ deliver <- function(token, base_url, ship_id, contract_id, contract_symbol, unit
 #'
 #' @export
 fly_and_dock <- function(token, base_url, ship_id, waypoint_id) {
-  f <- future::future(
-    navigate(token, base_url, ship_id, waypoint_id),
-    seed = TRUE
-  )
-  while(!future::resolved(f)) {
-    Sys.sleep(1)
-  }
-  nav <- value(f)
+  navigate(token, base_url, ship_id, waypoint_id)
   dock(token, base_url, ship_id)
 }
 
