@@ -242,7 +242,7 @@ process_stack <- function(requests = NULL, token, base_url, pool) {
       ),
       requests
     )
-
+  return(requests)
 
   }
 
@@ -268,7 +268,8 @@ process_stack <- function(requests = NULL, token, base_url, pool) {
       glue::glue("Parsing {endpoint} endpoint to database")
     )
 
-    expr_str <- glue::glue("{endpoint_map[[endpoint]]}({response}, pool)")
+    expr_str <- glue::glue("{endpoint_map[[endpoint]]}({response[1]}, pool)")
+    print(expr_str)
 
     expr <- parse(
       text = expr_str
@@ -293,6 +294,12 @@ update_ui <- function(pool, stack, output) {
       "Pending requests: {length(stack)}"
     )
   })
+
+  output$agent_table <- shiny::renderTable({
+    dplyr::tbl(pool, "agent") |>
+    dplyr::collect()
+  })
+
   return(output)
 }
 

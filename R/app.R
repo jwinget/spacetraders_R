@@ -2,10 +2,13 @@ library(here)
 library(shiny)
 
 ui <- fluidPage(
+  titlePanel("Astral Expeditions"),
   fluidRow(
     column(2,
-           shiny::textOutput("stack_size")
-    )
+           textOutput("stack_size")
+    ),
+    column(8,
+           tableOutput("agent_table"))
   )
 )
 
