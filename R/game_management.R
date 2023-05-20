@@ -269,7 +269,6 @@ process_stack <- function(requests = NULL, token, base_url, pool) {
     )
 
     expr_str <- glue::glue("{endpoint_map[[endpoint]]}({response[1]}, pool)")
-    print(expr_str)
 
     expr <- parse(
       text = expr_str
@@ -300,41 +299,5 @@ update_ui <- function(pool, stack, output) {
     dplyr::collect()
   })
 
-  return(output)
-}
-
-tick <- function(game = NULL,
-                 stack = requests,
-                 input = NULL,
-                 output = NULL,
-                 check_time = NULL) {
-  if (is.null(check_time)) {
-    check_time <- Sys.time()
-  }
-
-  if (is.null(game)) {
-    message("Please provide a game object as an argument.")
-  }
-
-  while (TRUE) {
-    now <- Sys.time()
-    time_delta <- lubridate::seconds(now - check_time)
-
-    if (time_delta >= 1) {
-      message(glue::glue("Tick {now}"))
-      # Tick logic goes here
-      stack <- process_stack(requests = stack,
-                             token = game$token,
-                             base_url = game$url,
-                             pool = game$db)
-
-      output <- update_ui(game$db,
-                          stack,
-                          output)
-
-      # Update check_time for the next iteration
-      check_time <- now
-    }
-  }
   return(output)
 }

@@ -22,10 +22,21 @@ server <- function(input, output, session) {
   g <- spacetraders::game(pool)
   requests <- c()
 
-  output <- spacetraders::tick(game = g,
-                 stack = requests,
-                 input = input,
-                 output = output)
+  timer <- reactiveTimer(1000)
+  # Reactive values to store the stack and output
+  stack <- reactiveVal(c())
+  output <- reactiveValues()
+
+  # Update the stack and output at each tick
+  observeEvent(timer(), {
+    now <- Sys.time()
+    stack(stack() |>
+            spacetraders::process_stack(token = g$token,
+                          base_url = g$url,
+                          pool = pool))
+
+    output <- spacetraders::update_ui(pool, stack(), output)
+  })
 
   onStop(function() {
     pool::poolClose(pool)
