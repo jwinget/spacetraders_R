@@ -5,7 +5,7 @@
 \alias{token}
 \title{Constants}
 \format{
-An object of class \code{character} of length 1.
+An object of class \code{character} of length 2.
 }
 \usage{
 token

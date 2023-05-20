@@ -1,0 +1,11 @@
+# Roadmap
+* NO BLOCKING CODE. All requests are submitted to a queue instantly and state is tracked in the background
+  - Likely need to write a scheduler and change existing functions to use it
+  - Ideally remove dependencies for `future` and `furrr`
+* More efficient mining loop that takes advantage of faster/larger haulers
+* Add functions for navigation, exploration, and market analysis
+* Permanent storage for data market, charts, ships (anything else?)
+  - local sqlite database
+  - UI fed by local DB, not by API calls
+* More granular control over ships and/or ship groupings
+* UI overhaul to display and control all of that stuff

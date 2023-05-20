@@ -1,6 +1,6 @@
 Package: spacetraders
 Title: Interface for the spacetraders.io API game
-Version: 0.0.0.9000
+Version: 0.0.1.0
 Authors@R: 
     person("Jason", "Winget", , "jwinget@gmail.com", role = c("aut", "cre"))
 Description: What the package does (one paragraph).
@@ -10,6 +10,8 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Imports: 
     bslib,
+    DBI,
+    dbplyr,
     dplyr,
     furrr,
     future,
@@ -17,7 +19,9 @@ Imports:
     httr,
     jsonlite,
     lubridate,
-    reactable,
+    pool,
+    rlang,
+    RSQLite,
     shiny,
     tibble,
     tidyr
