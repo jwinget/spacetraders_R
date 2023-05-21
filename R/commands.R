@@ -29,19 +29,6 @@ cmd <- function(endpoint = endpoint,
            y = endpoint
       )
     )
-  } else {
-    expr <- substitute(
-      send_request(method = x,
-                   token = token,
-                   base_url = base_url,
-                   endpoint = y,
-                   add
-      ),
-      list(x = method,
-           y = endpoint,
-           add = additional_args
-      )
-    )
   }
 
   requests <- expr |>
@@ -68,6 +55,28 @@ orbit <- function(ship_select, requests) {
   return(requests)
 }
 
+#' Deliver contract cargo
+#'
+#'@param ship_symbol A ship symbol
+#'@param requests A vector of pending requests
+#'
+#' @export
+deliver <- function(contract_select, requests) {
+  endpoint <- "my/contracts/CONTRACT_SELECT/deliver"
+
+  request_body <- list(
+    contractID = contract_select
+  )
+
+  requests <- purrr::map(contract_select, ~{
+    endpoint <- gsub("CONTRACT_SELECT", .x, endpoint)
+    cmd(endpoint, "POST", requests)
+  }) |>
+    unlist()
+
+  return(requests)
+}
+
 #' Dock a ship
 #'
 #'@param ship_symbol A ship symbol
@@ -86,6 +95,76 @@ dock <- function(ship_select, requests) {
   return(requests)
 }
 
+#' Extract resources
+#'
+#'@param ship_symbol A ship symbol
+#'@param requests A vector of pending requests
+#'
+#' @export
+extract <- function(ship_select, requests) {
+  endpoint <- "my/ships/SHIP_SELECT/extract"
+
+  requests <- purrr::map(ship_select, ~{
+    endpoint <- gsub("SHIP_SELECT", .x, endpoint)
+    cmd(endpoint, "POST", requests)
+  }) |>
+    unlist()
+
+  return(requests)
+}
+
+#' Refuel a ship
+#'
+#'@param ship_symbol A ship symbol
+#'@param requests A vector of pending requests
+#'
+#' @export
+refuel <- function(ship_select, requests) {
+  endpoint <- "my/ships/SHIP_SELECT/refuel"
+
+  requests <- purrr::map(ship_select, ~{
+    endpoint <- gsub("SHIP_SELECT", .x, endpoint)
+    cmd(endpoint, "POST", requests)
+  }) |>
+    unlist()
+
+  return(requests)
+}
+
+#' Sell cargo
+#'
+#'@param ship_symbol A ship symbol
+#'@param requests A vector of pending requests
+#'
+#' @export
+sell <- function(ship_select, cargo, requests) {
+  endpoint <- "my/ships/SHIP_SELECT/sell"
+  purrr::map(cargo, ~{
+    request_body <- list(
+      symbol = item_symbol,
+      units = item_units
+    )
+
+    requests <- purrr::map(ship_select, ~{
+      endpoint <- gsub("SHIP_SELECT", .x, endpoint)
+      expr <- substitute(
+        send_request(method = "POST",
+                     token = token,
+                     base_url = base_url,
+                     endpoint = y,
+                     body = x),
+        list(x = request_body,
+             y = endpoint)
+      )
+    }) |>
+      unlist()
+
+  }) |>
+    unlist()
+
+  return(requests)
+}
+
 #' Warp a ship
 #'
 #'@param ship_symbol A ship symbol
@@ -95,13 +174,21 @@ dock <- function(ship_select, requests) {
 #' @export
 warp <- function(ship_select, waypoint_select, requests) {
   endpoint <- "my/ships/SHIP_SELECT/navigate"
-  body <- list(
+  request_body <- list(
     waypointSymbol = waypoint_select
   )
 
   requests <- purrr::map(ship_select, ~{
     endpoint <- gsub("SHIP_SELECT", .x, endpoint)
-    cmd(endpoint, "POST", requests, body = body)
+    expr <- substitute(
+      send_request(method = "POST",
+                   token = token,
+                   base_url = base_url,
+                   endpoint = y,
+                   body = x),
+      list(x = request_body,
+           y = endpoint)
+    )
   }) |>
     unlist()
 

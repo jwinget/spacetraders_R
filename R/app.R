@@ -25,11 +25,15 @@ ui <- fluidPage(
   ),
   actionButton("orbit_button", "Orbit"),
   actionButton("dock_button", "Dock"),
+  actionButton("refuel_button", "Refuel"),
   actionButton("warp_button", "Warp"),
+  actionButton("extract_button", "Extract"),
+  actionButton("deliver_button", "Deliver"),
+  actionButton("sell_button", "Sell"),
   h3("Agent"),
   tableOutput("agent_table"),
   h3("Contract"),
-  tableOutput("contract_status"),
+  reactableOutput("contract_status"),
   h3("Ships"),
   tableOutput("ship_status"),
   h3("Navigation"),
@@ -71,9 +75,37 @@ server <- function(input, output, session) {
     )
   })
 
+  observeEvent(input$refuel_button, {
+    message(glue::glue("Repleneshing fuel cells on {selected_ships()}"))
+    stack(spacetraders::refuel(selected_ships(), stack())
+    )
+  })
+
   observeEvent(input$warp_button, {
     message(glue::glue("{selected_ships()} warping to {selected_waypoint()}"))
     stack(spacetraders::warp(selected_ships(), selected_waypoint(), stack()))
+  })
+
+  observeEvent(input$extract_button, {
+    message(glue::glue("Extracting resources with {selected_ships()}"))
+    stack(spacetraders::extract(selected_ships(), stack())
+    )
+  })
+
+  observeEvent(input$deliver_button, {
+    message(glue::glue("Delivering contract resources from {selected_ships()}"))
+    stack(spacetraders::deliver(selected_contract(), stack())
+    )
+  })
+
+  observeEvent(input$sell_button, {
+    message(glue::glue("Selling {selected_ships()}'s cargo"))
+    cargo <- dplyr::tbl(pool, "cargo") |>
+      dplyr::filter(ship_symbol %in% selected_ships()) |>
+      dplyr::collect()
+
+    stack(spacetraders::sell(selected_ships(), cargo, stack())
+    )
   })
 
   #---- Outputs ----#
@@ -109,7 +141,7 @@ server <- function(input, output, session) {
 
   ships <- reactive({
     invalidateLater(10000)
-    dplyr::tbl(pool, "ships") |>
+    ships <- dplyr::tbl(pool, "ship_data") |>
       dplyr::collect()
   })
 
@@ -117,9 +149,13 @@ server <- function(input, output, session) {
     agent()
   })
 
-  output$contract_status <- renderTable({
-    contracts()
+  output$contract_status <- renderReactable({
+    reactable(contracts(),
+              selection = "single",
+              onClick = "select")
   })
+
+  selected_contract <- reactive(contracts()$contract_id[getReactableState("contract_status", "selected")])
 
   output$navigation_overview <- renderTable({
     nav()
@@ -146,7 +182,7 @@ server <- function(input, output, session) {
       reactable(selection = "single", onClick = "select")
   })
 
-  selected_waypoint <- reactive(nav()$waypoint[getReactableState("waypoint_select_ui", "selected")])
+  selected_waypoint <- reactive(systems()$waypoint_symbol[getReactableState("waypoint_select_ui", "selected")])
 
   output$title_string <- renderText(
     glue::glue("{agent()$symbol} Expeditions")

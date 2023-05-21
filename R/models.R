@@ -73,6 +73,8 @@ parse_ships <- function(res, pool) {
       ship_symbol = res$symbol,
       fuel_current = res$fuel$current,
       fuel_capacity = res$fuel$capacity,
+      cargo_current = res$cargo$units,
+      cargo_capacity = res$cargo$capacity,
       frame_name = res$frame$name,
     )
 

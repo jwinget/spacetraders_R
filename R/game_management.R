@@ -145,7 +145,7 @@ send_request <- function(method, token, base_url, endpoint, body = NULL) {
 #'
 #' @export
 add_request <- function(expr, requests) {
-  message(glue::glue("Adding {deparse(expr)}"))
+  #message(glue::glue("Adding {deparse(expr)}"))
   flush.console()
   return(
     c(requests, expr)
@@ -161,7 +161,7 @@ add_request <- function(expr, requests) {
 #' @export
 process_stack <- function(requests = NULL, token, base_url, pool) {
   if (length(requests) == 0) {
-    message("No commands to send, updating tables")
+    message("Refreshing database")
 
     # Get agent data
     requests <- add_request(
@@ -241,10 +241,6 @@ process_stack <- function(requests = NULL, token, base_url, pool) {
     )
 
     if (endpoint %in% names(endpoint_map)) {
-    message(
-      glue::glue("Parsing {endpoint} endpoint to database")
-    )
-
     expr_str <- glue::glue("{endpoint_map[[endpoint]]}({response[1]}, pool)")
     expr <- parse(text = expr_str)
 
