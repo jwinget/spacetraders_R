@@ -100,11 +100,8 @@ server <- function(input, output, session) {
 
   observeEvent(input$sell_button, {
     message(glue::glue("Selling {selected_ships()}'s cargo"))
-    cargo <- dplyr::tbl(pool, "cargo") |>
-      dplyr::filter(ship_symbol %in% selected_ships()) |>
-      dplyr::collect()
 
-    stack(spacetraders::sell(selected_ships(), cargo, stack())
+    stack(spacetraders::sell(selected_ships(), cargo(), stack())
     )
   })
 

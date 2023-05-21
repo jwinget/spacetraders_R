@@ -84,11 +84,8 @@ deliver <- function(ship_select, contract_select, cargo, requests) {
          y = endpoint)
 
   )
-  print(expr)
   requests <<- c(requests, expr)
-  }) |>
-    unlist()
-
+  })
 
   return(requests)
 }
@@ -155,29 +152,35 @@ refuel <- function(ship_select, requests) {
 #' @export
 sell <- function(ship_select, cargo, requests) {
   endpoint <- "my/ships/SHIP_SELECT/sell"
-  purrr::map(cargo, ~{
-    request_body <- list(
-      symbol = item_symbol,
-      units = item_units
-    )
 
-    requests <- purrr::map(ship_select, ~{
-      endpoint <- gsub("SHIP_SELECT", .x, endpoint)
-      expr <- substitute(
-        send_request(method = "POST",
-                     token = token,
-                     base_url = base_url,
-                     endpoint = y,
-                     body = x),
-        list(x = request_body,
-             y = endpoint)
-      )
-    }) |>
+  for (i in seq_along(ship_select)) {
+    ship_cargo <- cargo |>
+      dplyr::filter(ship_symbol == ship_select[i])
+
+    endpoint <- gsub("SHIP_SELECT", ship_select[i], endpoint)
+
+    requests <- purrr::map2(ship_cargo$item_symbol,
+                ship_cargo$item_units, ~{
+                  request_body <- list(
+                    symbol = .x,
+                    units = .y
+                  )
+
+                  expr <- substitute(
+                    send_request(method = "POST",
+                                 token = token,
+                                 base_url = base_url,
+                                 endpoint = y,
+                                 body = x),
+                    list(x = request_body,
+                         y = endpoint)
+                  )
+
+                  return(c(requests, expr))
+                }) |>
       unlist()
 
-  }) |>
-    unlist()
-
+  }
   return(requests)
 }
 
