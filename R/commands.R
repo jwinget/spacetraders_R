@@ -61,18 +61,34 @@ orbit <- function(ship_select, requests) {
 #'@param requests A vector of pending requests
 #'
 #' @export
-deliver <- function(contract_select, requests) {
-  endpoint <- "my/contracts/CONTRACT_SELECT/deliver"
+deliver <- function(ship_select, contract_select, cargo, requests) {
+  endpoint <- glue::glue("my/contracts/{contract_select$contract_id}/deliver")
 
+  purrr::map(ship_select, ~{
   request_body <- list(
-    contractID = contract_select
+    shipSymbol = .x,
+    tradeSymbol = contract_select$deliver_symbol,
+    units = cargo |>
+      dplyr::filter(ship_symbol == .x &
+               item_symbol == contract_select$deliver_symbol) |>
+      dplyr::pull(item_units)
   )
 
-  requests <- purrr::map(contract_select, ~{
-    endpoint <- gsub("CONTRACT_SELECT", .x, endpoint)
-    cmd(endpoint, "POST", requests)
+    expr <- substitute(
+    send_request(method = "POST",
+                 token = token,
+                 base_url = base_url,
+                 endpoint = y,
+                 body = x),
+    list(x = request_body,
+         y = endpoint)
+
+  )
+  print(expr)
+  requests <<- c(requests, expr)
   }) |>
     unlist()
+
 
   return(requests)
 }

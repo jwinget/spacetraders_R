@@ -94,7 +94,7 @@ server <- function(input, output, session) {
 
   observeEvent(input$deliver_button, {
     message(glue::glue("Delivering contract resources from {selected_ships()}"))
-    stack(spacetraders::deliver(selected_contract(), stack())
+    stack(spacetraders::deliver(selected_ships(), selected_contract(), cargo(), stack())
     )
   })
 
@@ -118,8 +118,7 @@ server <- function(input, output, session) {
   contracts <- reactive({
     invalidateLater(10000)
     dplyr::tbl(pool, "contracts") |>
-      dplyr::select(faction,
-                    type,
+      dplyr::select(contract_id,
                     deliver_symbol,
                     deliver_destination,
                     units_required,
@@ -145,6 +144,12 @@ server <- function(input, output, session) {
       dplyr::collect()
   })
 
+  cargo <- reactive({
+    invalidateLater(5000)
+    cargo <- dplyr::tbl(pool, "cargo") |>
+      dplyr::collect()
+  })
+
   output$agent_table <- renderTable({
     agent()
   })
@@ -152,10 +157,11 @@ server <- function(input, output, session) {
   output$contract_status <- renderReactable({
     reactable(contracts(),
               selection = "single",
-              onClick = "select")
+              onClick = "select",
+              defaultSelected = c(1))
   })
 
-  selected_contract <- reactive(contracts()$contract_id[getReactableState("contract_status", "selected")])
+  selected_contract <- reactive(contracts()[getReactableState("contract_status", "selected"),])
 
   output$navigation_overview <- renderTable({
     nav()

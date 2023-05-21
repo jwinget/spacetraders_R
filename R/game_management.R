@@ -246,7 +246,7 @@ process_stack <- function(requests = NULL, token, base_url, pool) {
 
     eval(expr)
     } else if (stringr::str_detect(endpoint, "system")) {
-      message(glue::glue("Parsing system information: {endpoint}"))
+      #message(glue::glue("Parsing system information: {endpoint}"))
 
     expr_str <- glue::glue("parse_systems({response[1]}, pool)")
     expr <- parse(text = expr_str)
