@@ -4,7 +4,13 @@
 \alias{game}
 \title{Start up}
 \usage{
-game(pool, new_game = FALSE, token = NULL, symbol = NULL, faction = "COSMIC")
+game(
+  new_game = FALSE,
+  token = NULL,
+  symbol = NULL,
+  faction = "COSMIC",
+  pool = NULL
+)
 }
 \arguments{
 \item{new_game}{Force a new game?}

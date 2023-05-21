@@ -25,7 +25,7 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   # Startup
-  g <- spacetraders::game(pool)
+  g <- spacetraders::game(pool = pool)
   base_url <- g$url
   token <- g$token
 
@@ -48,15 +48,13 @@ server <- function(input, output, session) {
   #---- Inputs ----#
   observeEvent(input$orbit_button, {
     message(glue::glue("{input$ship_select} cleared for departure"))
-    stack(spacetraders::orbit(ship_symbol = input$ship_select,
-                        requests = stack())
+    stack(spacetraders::orbit(input$ship_select, stack())
     )
   })
 
   observeEvent(input$dock_button, {
     message(glue::glue("{input$ship_select} entering Bay {sample(1:10, 1)}"))
-    stack(spacetraders::dock(ship_symbol = input$ship_select,
-                              requests = stack())
+    stack(spacetraders::dock(input$ship_select, stack())
     )
   })
 

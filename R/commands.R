@@ -2,23 +2,24 @@
 #'
 #'@param ship_symbol A ship symbol
 #'@param requests A vector of pending requests
-#'@param game A game object
 #'
 #' @export
-orbit <- function(ship_symbol, requests) {
+orbit <- function(ship_select, requests) {
+  purrr::map(ship_select, ~{
+    endpoint <- glue::glue("my/ships/{.x}/orbit")
 
-  endpoint <- glue::glue("my/ships/{ship_symbol}/orbit")
-
-  requests <- add_request(
-    expr <- rlang::expr(
-      send_request(method = "POST",
-                   token = token,
-                   base_url = base_url,
-                   endpoint = {{ endpoint }}
-      )
-    ),
-    requests
-  )
+    requests <<- add_request(
+      expr <- substitute(
+        send_request(method = "POST",
+                     token = token,
+                     base_url = base_url,
+                     endpoint = x
+        ),
+        list(x = endpoint)
+      ),
+      requests
+    )
+  })
 
   return(requests)
 }
@@ -27,23 +28,24 @@ orbit <- function(ship_symbol, requests) {
 #'
 #'@param ship_symbol A ship symbol
 #'@param requests A vector of pending requests
-#'@param game A game object
 #'
 #' @export
-dock <- function(ship_symbol, requests) {
+dock <- function(ship_select, requests) {
+  purrr::map(ship_select, ~{
+    endpoint <- glue::glue("my/ships/{.x}/dock")
 
-  endpoint <- glue::glue("my/ships/{ship_symbol}/dock")
-
-  requests <- add_request(
-    expr <- rlang::expr(
-      send_request(method = "POST",
-                   token = token,
-                   base_url = base_url,
-                   endpoint = {{ endpoint }}
-      )
-    ),
-    requests
-  )
+    requests <<- add_request(
+      expr <- substitute(
+        send_request(method = "POST",
+                     token = token,
+                     base_url = base_url,
+                     endpoint = x
+        ),
+        list(x = endpoint)
+      ),
+      requests
+    )
+  })
 
   return(requests)
 }

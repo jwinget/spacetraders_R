@@ -4,14 +4,12 @@
 \alias{orbit}
 \title{Orbit a ship}
 \usage{
-orbit(ship_symbol, requests, game)
+orbit(ship_select, requests)
 }
 \arguments{
-\item{ship_symbol}{A ship symbol}
-
 \item{requests}{A vector of pending requests}
 
-\item{game}{A game object}
+\item{ship_symbol}{A ship symbol}
 }
 \description{
 Orbit a ship

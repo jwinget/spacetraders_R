@@ -7,12 +7,19 @@
 #' @param symbol Your agent name
 #' @param faction Faction to join. See https://docs.spacetraders.io/game-concepts/agents-and-factions
 #' @export
-game <- function(pool,
-                 new_game = FALSE,
+game <- function(new_game = FALSE,
                  token = NULL,
                  symbol = NULL,
-                 faction = "COSMIC") {
+                 faction = "COSMIC",
+                 pool = NULL) {
   base_url <- "https://api.spacetraders.io/v2"
+
+  if(is.null(pool)) {
+    pool <<- pool::dbPool(
+      drv = RSQLite::SQLite(),
+      dbname = here("db.sqlite")
+    )
+  }
 
   if (isTRUE(new_game)) {
     # Clear the database
@@ -139,6 +146,7 @@ send_request <- function(method, token, base_url, endpoint, body = NULL) {
 #' @export
 add_request <- function(expr, requests) {
   message(glue::glue("Adding {deparse(expr)}"))
+  flush.console()
   return(
     c(requests, expr)
   )

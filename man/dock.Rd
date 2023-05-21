@@ -4,14 +4,12 @@
 \alias{dock}
 \title{Dock a ship}
 \usage{
-dock(ship_symbol, requests, game)
+dock(ship_select, requests)
 }
 \arguments{
-\item{ship_symbol}{A ship symbol}
-
 \item{requests}{A vector of pending requests}
 
-\item{game}{A game object}
+\item{ship_symbol}{A ship symbol}
 }
 \description{
 Dock a ship
