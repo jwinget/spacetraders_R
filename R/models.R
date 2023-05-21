@@ -5,7 +5,7 @@
 #' @export
 parse_agent <- function(res, pool) {
   if (!is.null(res$error$message)) {
-    message("Error fetching agent_response from the API")
+    message("Error fetching agent from the API")
   } else {
     agent <- tibble::tibble(
       account_ID = res$accountId,
@@ -28,21 +28,30 @@ parse_agent <- function(res, pool) {
 #' @export
 parse_contracts <- function(res, pool) {
   if (!is.null(res$error$message)) {
-    message("Error fetching agent_response from the API")
+    message("Error fetching contracts from the API")
   } else {
-    contracts <- tibble::tibble(
-      id = res$id,
-      faction = res$factionSymbol,
-      type = res$type,
-      deadline = res$terms$deadline,
-      payment_on_accept = res$terms$payment$onAccepted,
-      payment_on_fulfill = res$terms$payment$onFulfilled,
-      deliver = res$deliver,
-      accepted = res$accepted,
-      fulfilled = res$fulfilled,
-      expiration = res$expiration,
-      accept_deadline = res$deadlineToAccept
-    )
+    contract_id <- res$id
+    faction <- res$faction
+    type <- res$type
+    deadline <- res$terms$deadline
+    payment_on_accept <- res$terms$payment$onAccepted
+    payment_on_fulfilled <- res$terms$payment$onFulfilled
+
+    contracts <- purrr::map(res$terms$deliver, ~{
+      tibble::tibble(
+        contract_id = contract_id,
+        faction = faction,
+        type = type,
+        deadline = deadline,
+        payment_on_accept = payment_on_accept,
+        payment_on_fulfilled = payment_on_fulfilled,
+        deliver_symbol = .x$tradeSymbol,
+        deliver_destination = .x$destinationSymbol,
+        units_required = .x$unitsRequired,
+        units_fulfilled = .x$unitsFulfilled
+      )
+    }) |>
+      dplyr::bind_rows()
 
     dplyr::copy_to(pool, contracts,
                    temporary = FALSE,
@@ -57,7 +66,7 @@ parse_contracts <- function(res, pool) {
 #' @export
 parse_ships <- function(res, pool) {
   if (!is.null(res$error$message)) {
-    message("Error fetching agent_response from the API")
+    message("Error fetching ships from the API")
   } else {
     # Parse that data
     ship_data <- tibble::tibble(
@@ -81,6 +90,8 @@ parse_ships <- function(res, pool) {
       dplyr::bind_rows()
 
     navigation <- tibble::tibble(
+      ship_symbol = res$symbol,
+      fuel_current = res$fuel_current,
       system = res$nav$systemSymbol,
       waypoint = res$nav$waypointSymbol,
       departure_waypoint = res$nav$route$departure$symbol,
@@ -121,13 +132,55 @@ parse_ships <- function(res, pool) {
 #' @export
 parse_systems <- function(res, pool) {
   if (!is.null(res$error$message)) {
-    message("Error fetching agent_response from the API")
+    message("Error fetching system from the API")
   } else {
-    #systems <- tibble::tibble(
-    #
-    #)
-    #
-    #dplyr::copy_to(pool, systems,
-    #               temporary = FALSE)
+    system_symbol <- res$symbol
+    sector <- res$sectorSymbol
+    system_type <- res$type
+    this_system <-tibble::tibble(
+        system_symbol = system_symbol,
+        sector = sector,
+        system_type = system_type,
+        waypoint_symbol = res$waypoints$symbol,
+        waypoint_type = res$waypoints$type
+      )
+
+    # Add these to the database if not present
+    # "Append" doesn't seem to work in copy_to,
+    # So we re-write the entire table :(
+
+    systems <- dplyr::tbl(pool, "systems") |>
+      dplyr::collect() |>
+      dplyr::bind_rows(this_system) |>
+      dplyr::distinct()
+
+    dplyr::copy_to(pool, systems,
+                   temporary = FALSE,
+                   overwrite = TRUE)
+  }
+}
+
+#' Parse Waypoints
+#'
+#' Parse waypoint information to database
+#'
+#' @export
+parse_waypoints <- function(res, pool) {
+  if (!is.null(res$error$message)) {
+    message("Error fetching waypoints from the API")
+  } else {
+    waypoints <- tibble::tibble(
+      system_symbol = res$systemSymbol,
+      waypoint_symbol = res$symbol,
+      faction = res$faction$symbol,
+      type = res$type,
+      charted = res$traits$symbol,
+      name = res$traits$name,
+      description = res$traits$description
+    )
+
+    dplyr::copy_to(pool, waypoints,
+                   temporary = FALSE,
+                   append = TRUE)
   }
 }

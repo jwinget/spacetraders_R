@@ -12,15 +12,37 @@ cmd <- function(endpoint = endpoint,
                 method = method,
                 requests = requests,
                 ...) {
-  expr <- substitute(
-    send_request(method = x,
-                 token = token,
-                 base_url = base_url,
-                 endpoint = y
-                 ),
-    list(x = method,
-         y = endpoint)
-  )
+
+  additional_args <- match.call(expand.dots = FALSE)$...
+
+  print(additional_args)
+
+  if (is.null(additional_args)) {
+    # No need to handle request body etc
+    expr <- substitute(
+      send_request(method = x,
+                   token = token,
+                   base_url = base_url,
+                   endpoint = y
+      ),
+      list(x = method,
+           y = endpoint
+      )
+    )
+  } else {
+    expr <- substitute(
+      send_request(method = x,
+                   token = token,
+                   base_url = base_url,
+                   endpoint = y,
+                   add
+      ),
+      list(x = method,
+           y = endpoint,
+           add = additional_args
+      )
+    )
+  }
 
   requests <- expr |>
     add_request(requests)
@@ -58,6 +80,28 @@ dock <- function(ship_select, requests) {
   requests <- purrr::map(ship_select, ~{
     endpoint <- gsub("SHIP_SELECT", .x, endpoint)
     cmd(endpoint, "POST", requests)
+  }) |>
+    unlist()
+
+  return(requests)
+}
+
+#' Warp a ship
+#'
+#'@param ship_symbol A ship symbol
+#'@param waypoint A waypoint symbol
+#'@param requests A vector of pending requests
+#'
+#' @export
+warp <- function(ship_select, waypoint_select, requests) {
+  endpoint <- "my/ships/SHIP_SELECT/navigate"
+  body <- list(
+    waypointSymbol = waypoint_select
+  )
+
+  requests <- purrr::map(ship_select, ~{
+    endpoint <- gsub("SHIP_SELECT", .x, endpoint)
+    cmd(endpoint, "POST", requests, body = body)
   }) |>
     unlist()
 

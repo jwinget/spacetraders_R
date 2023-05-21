@@ -187,17 +187,26 @@ process_stack <- function(requests = NULL, token, base_url, pool) {
       requests
     )
 
-    # Get system data
-    requests <- add_request(
-      ship_data <- rlang::expr(
-        send_request(method = "GET",
-                     token = token,
-                     base_url = base_url,
-                     endpoint = "systems"
-        )
-      ),
-      requests
-    )
+    # Get system data for current locations
+    ship_locations <- dplyr::tbl(pool, "navigation") |>
+      dplyr::pull(system)
+
+    endpoint <- "systems/LOCATION"
+    requests <- purrr::map(ship_locations, ~{
+      endpoint <- gsub("LOCATION", .x, endpoint)
+      add_request(
+        contract_data <- substitute(
+          send_request(method = "GET",
+                       token = token,
+                       base_url = base_url,
+                       endpoint = x
+          ),
+          list(x = endpoint)
+        ),
+        requests
+      )
+    }) |>
+      unlist()
 
     # Get contract data
     requests <- add_request(
@@ -228,7 +237,6 @@ process_stack <- function(requests = NULL, token, base_url, pool) {
     endpoint_map <- c(
       "my/agent" = "parse_agent",
       "my/ships" = "parse_ships",
-      "systems" = "parse_systems",
       "my/contracts" = "parse_contracts"
     )
 
@@ -238,10 +246,14 @@ process_stack <- function(requests = NULL, token, base_url, pool) {
     )
 
     expr_str <- glue::glue("{endpoint_map[[endpoint]]}({response[1]}, pool)")
+    expr <- parse(text = expr_str)
 
-    expr <- parse(
-      text = expr_str
-    )
+    eval(expr)
+    } else if (stringr::str_detect(endpoint, "system")) {
+      message(glue::glue("Parsing system information: {endpoint}"))
+
+    expr_str <- glue::glue("parse_systems({response[1]}, pool)")
+    expr <- parse(text = expr_str)
 
     eval(expr)
     } else {

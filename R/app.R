@@ -2,6 +2,7 @@ library(here)
 library(shiny)
 library(DBI)
 library(pool)
+library(reactable)
 
 pool <- pool::dbPool(
   drv = RSQLite::SQLite(),
@@ -13,13 +14,25 @@ ui <- fluidPage(
     textOutput("title_string"),
     windowTitle = "Spacetraders"
     ),
-  uiOutput("ship_select_ui"),
+  textOutput("stack_size"),
+  fluidRow(
+    column(6,
+           reactableOutput("ship_select_ui")
+           ),
+    column(6,
+           reactableOutput("waypoint_select_ui")
+           ),
+  ),
   actionButton("orbit_button", "Orbit"),
   actionButton("dock_button", "Dock"),
-  textOutput("stack_size"),
+  actionButton("warp_button", "Warp"),
+  h3("Agent"),
   tableOutput("agent_table"),
+  h3("Contract"),
   tableOutput("contract_status"),
+  h3("Ships"),
   tableOutput("ship_status"),
+  h3("Navigation"),
   tableOutput("navigation_overview")
 )
 
@@ -47,15 +60,20 @@ server <- function(input, output, session) {
 
   #---- Inputs ----#
   observeEvent(input$orbit_button, {
-    message(glue::glue("{input$ship_select} cleared for departure"))
-    stack(spacetraders::orbit(input$ship_select, stack())
+    message(glue::glue("{selected_ships()} cleared for departure"))
+    stack(spacetraders::orbit(selected_ships(), stack())
     )
   })
 
   observeEvent(input$dock_button, {
-    message(glue::glue("{input$ship_select} entering Bay {sample(1:10, 1)}"))
-    stack(spacetraders::dock(input$ship_select, stack())
+    message(glue::glue("{selected_ships()} entering Docking Bay {sample(1:10, 1)}"))
+    stack(spacetraders::dock(selected_ships(), stack())
     )
+  })
+
+  observeEvent(input$warp_button, {
+    message(glue::glue("{selected_ships()} warping to {selected_waypoint()}"))
+    stack(spacetraders::warp(selected_ships(), selected_waypoint(), stack()))
   })
 
   #---- Outputs ----#
@@ -78,8 +96,14 @@ server <- function(input, output, session) {
   })
 
   nav <- reactive({
-    invalidateLater(4000)
+    invalidateLater(10000)
     dplyr::tbl(pool, "navigation") |>
+      dplyr::collect()
+  })
+
+  systems <- reactive({
+    invalidateLater(10000)
+    dplyr::tbl(pool, "systems") |>
       dplyr::collect()
   })
 
@@ -105,16 +129,24 @@ server <- function(input, output, session) {
     glue::glue("Pending requests: {length(stack())}")
   })
 
-  output$ship_select_ui <- renderUI({
-    checkboxGroupInput("ship_select",
-                "Select ship:",
-                choices = ships()$ship_symbol)
+  output$ship_select_ui <- renderReactable({
+    ships() |>
+      reactable(selection = "multiple", onClick = "select")
   })
 
-  output$ship_status <- renderTable({
-    dplyr::tbl(pool, "ships") |>
-      dplyr::collect()
+  selected_ships <- reactive(ships()$ship_symbol[getReactableState("ship_select_ui", "selected")])
+
+  output$waypoint_select_ui <- renderReactable({
+    # Filter waypoints based on selected ship(s)
+    if (is.null(selected_ships)) {
+      selected_ships <- ships()$symbol
+    }
+
+    systems() |>
+      reactable(selection = "single", onClick = "select")
   })
+
+  selected_waypoint <- reactive(nav()$waypoint[getReactableState("waypoint_select_ui", "selected")])
 
   output$title_string <- renderText(
     glue::glue("{agent()$symbol} Expeditions")
