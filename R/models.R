@@ -31,20 +31,17 @@ parse_contracts <- function(res, pool) {
     message("Error fetching agent_response from the API")
   } else {
     contracts <- tibble::tibble(
-      id <- res$id,
-      faction <- res$factionSymbol,
-      type <- res$type,
-      deadline <- res$terms$deadline,
-      payment_on_accept <- res$terms.payment.onAccepted,
-      payment_on_fulfill <- res$term.payment.onFulfilled,
-      deliver_symbol <- res$terms$deliver$tradeSymbol,
-      deliver_destination <- res$terms$deliver$destinationSymbol,
-      units_required <- res$terms$deliver$unitsRequired,
-      units_fulfilled <- res$terms$deliver$unitsFulfilled,
-      accepted <- res$accepted,
-      fulfilled <- res$fulfilled,
-      expiration <- res$expiration,
-      accept_deadline <- res$deadlineToAccept
+      id = res$id,
+      faction = res$factionSymbol,
+      type = res$type,
+      deadline = res$terms$deadline,
+      payment_on_accept = res$terms$payment$onAccepted,
+      payment_on_fulfill = res$terms$payment$onFulfilled,
+      deliver = res$deliver,
+      accepted = res$accepted,
+      fulfilled = res$fulfilled,
+      expiration = res$expiration,
+      accept_deadline = res$deadlineToAccept
     )
 
     dplyr::copy_to(pool, contracts,

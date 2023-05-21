@@ -97,46 +97,6 @@ game <- function(pool,
   )
 }
 
-#' Tick
-#'
-#' A game tick
-#'
-#' @param check_time The time of the previous cycle
-#' @param game An object produced by \code{game()}
-#' @export
-tick <- function(game = NULL,
-                 stack = requests,
-                 input = NULL,
-                 output = NULL,
-                 check_time = NULL) {
-  if (is.null(check_time)) {
-    check_time <- Sys.time()
-  }
-
-  if (is.null(game)) {
-    message("Please provide a game object as an argument.")
-  }
-
-  while (TRUE) {
-    now <- Sys.time()
-    time_delta <- lubridate::seconds(now - check_time)
-
-    if (time_delta >= 1) {
-      message(glue::glue("Tick {now}"))
-      # Tick logic goes here
-      stack <- process_stack(stack, game$token, game$url)
-      output <- update_ui(game$pool,
-                stack,
-                output)
-
-      # Update check_time for the next iteration
-      check_time <- now
-    }
-  }
-  return(output)
-}
-
-
 #' Send request
 #'
 #' Sends a request to the spacetraders.io api
@@ -255,7 +215,7 @@ process_stack <- function(requests = NULL, token, base_url, pool) {
     # warning: could lead to a buildup of crap commands
     requests <- c(requests, requests[1])
   } else if (length(requests) > 0) {
-  # Call appropriate parse tool based on endpoint
+  # Call appropriate db parse tool based on endpoint
     endpoint <- requests[[1]]$endpoint
     endpoint_map <- c(
       "my/agent" = "parse_agent",
@@ -264,6 +224,7 @@ process_stack <- function(requests = NULL, token, base_url, pool) {
       "my/contracts" = "parse_contracts"
     )
 
+    if (endpoint %in% names(endpoint_map)) {
     message(
       glue::glue("Parsing {endpoint} endpoint to database")
     )
@@ -275,29 +236,11 @@ process_stack <- function(requests = NULL, token, base_url, pool) {
     )
 
     eval(expr)
+    } else {
+      message(glue::glue("Triggering {endpoint}"))
+    }
   }
 
   requests <- requests[-1]
   return(requests)
-}
-
-#' Update UI
-#'
-#' Refresh the UI using values from the database
-#'
-#' @export
-update_ui <- function(pool, stack, output) {
-  # Pending requests
-  output$stack_size <- shiny::renderText({
-    glue::glue(
-      "Pending requests: {length(stack)}"
-    )
-  })
-
-  output$agent_table <- shiny::renderTable({
-    dplyr::tbl(pool, "agent") |>
-    dplyr::collect()
-  })
-
-  return(output)
 }

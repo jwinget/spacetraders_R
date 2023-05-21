@@ -4,7 +4,7 @@
 \alias{process_stack}
 \title{Process stack}
 \usage{
-process_stack(requests = NULL, token, base_url)
+process_stack(requests = NULL, token, base_url, pool)
 }
 \arguments{
 \item{requests}{A vector of requests to process}
