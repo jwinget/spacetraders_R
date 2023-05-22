@@ -10,26 +10,19 @@
 #' @export
 cmd <- function(endpoint = endpoint,
                 method = method,
-                requests = requests,
-                ...) {
+                requests = requests) {
 
-  additional_args <- match.call(expand.dots = FALSE)$...
-
-  print(additional_args)
-
-  if (is.null(additional_args)) {
-    # No need to handle request body etc
-    expr <- substitute(
-      send_request(method = x,
-                   token = token,
-                   base_url = base_url,
-                   endpoint = y
-      ),
-      list(x = method,
-           y = endpoint
-      )
+  # No need to handle request body etc
+  expr <- substitute(
+    send_request(method = x,
+                 token = token,
+                 base_url = base_url,
+                 endpoint = y
+    ),
+    list(x = method,
+         y = endpoint
     )
-  }
+  )
 
   requests <- expr |>
     add_request(requests)
@@ -47,6 +40,7 @@ orbit <- function(ship_select, requests) {
   endpoint <- "my/ships/SHIP_SELECT/orbit"
 
   requests <- purrr::map(ship_select, ~{
+    message(glue::glue("{.x} cleared for departure"))
     endpoint <- gsub("SHIP_SELECT", .x, endpoint)
     cmd(endpoint, "POST", requests)
   }) |>
@@ -62,31 +56,50 @@ orbit <- function(ship_select, requests) {
 #'
 #' @export
 deliver <- function(ship_select, contract_select, cargo, requests) {
+
   endpoint <- glue::glue("my/contracts/{contract_select$contract_id}/deliver")
 
   purrr::map(ship_select, ~{
-  request_body <- list(
-    shipSymbol = .x,
-    tradeSymbol = contract_select$deliver_symbol,
-    units = cargo |>
+    # Check ship cargo to see how many units should be delivered
+    deliver_units <- cargo |>
       dplyr::filter(ship_symbol == .x &
-               item_symbol == contract_select$deliver_symbol) |>
+                      item_symbol == contract_select$deliver_symbol) |>
       dplyr::pull(item_units)
-  )
 
-    expr <- substitute(
-    send_request(method = "POST",
-                 token = token,
-                 base_url = base_url,
-                 endpoint = y,
-                 body = x),
-    list(x = request_body,
-         y = endpoint)
+    if(length(deliver_units > 0)) {
+      message(glue::glue("{.x} is making a delivery!"))
+      # Have some cargo to deliver
+      # Warp to delivery waypoint
+      # spacetraders::warp(.x, , contract_select$deliver_destination, requests)
+      # Dock, refuel
+      # Need to handle travel time here
+      # Deliver cargo
+      request_body <- list(
+        shipSymbol = .x,
+        tradeSymbol = contract_select$deliver_symbol,
+        units = deliver_units
+      )
 
-  )
-  requests <<- c(requests, expr)
+      expr <- substitute(
+        send_request(method = "POST",
+                     token = token,
+                     base_url = base_url,
+                     endpoint = y,
+                     body = x),
+        list(x = request_body,
+             y = endpoint)
+
+      )
+      requests <<- c(requests, expr)
+
+      # Try to sell stuff
+
+      # Orbit when done
+
+    } else {
+      message(glue::glue("{.x} does not have any contract cargo to deliver"))
+    }
   })
-
   return(requests)
 }
 
@@ -100,6 +113,7 @@ dock <- function(ship_select, requests) {
   endpoint <- "my/ships/SHIP_SELECT/dock"
 
   requests <- purrr::map(ship_select, ~{
+    message(glue::glue("{.x} entering Docking Bay {sample(1:10, 1)}"))
     endpoint <- gsub("SHIP_SELECT", .x, endpoint)
     cmd(endpoint, "POST", requests)
   }) |>
@@ -118,6 +132,7 @@ extract <- function(ship_select, requests) {
   endpoint <- "my/ships/SHIP_SELECT/extract"
 
   requests <- purrr::map(ship_select, ~{
+    message(glue::glue("Extracting resources with {.x}"))
     endpoint <- gsub("SHIP_SELECT", .x, endpoint)
     cmd(endpoint, "POST", requests)
   }) |>
@@ -136,6 +151,7 @@ refuel <- function(ship_select, requests) {
   endpoint <- "my/ships/SHIP_SELECT/refuel"
 
   requests <- purrr::map(ship_select, ~{
+    message(glue::glue("Replenishing fuel cells on {.x}"))
     endpoint <- gsub("SHIP_SELECT", .x, endpoint)
     cmd(endpoint, "POST", requests)
   }) |>
@@ -153,13 +169,15 @@ refuel <- function(ship_select, requests) {
 sell <- function(ship_select, cargo, requests) {
   endpoint <- "my/ships/SHIP_SELECT/sell"
 
+  # Don't know why but my brain can't process this as a nested purrr operation
   for (i in seq_along(ship_select)) {
+    message(glue::glue("Selling {ship_select[i]}'s cargo"))
     ship_cargo <- cargo |>
       dplyr::filter(ship_symbol == ship_select[i])
 
     endpoint <- gsub("SHIP_SELECT", ship_select[i], endpoint)
 
-    requests <- purrr::map2(ship_cargo$item_symbol,
+    sales <- purrr::map2(ship_cargo$item_symbol,
                 ship_cargo$item_units, ~{
                   request_body <- list(
                     symbol = .x,
@@ -175,11 +193,9 @@ sell <- function(ship_select, cargo, requests) {
                     list(x = request_body,
                          y = endpoint)
                   )
-
-                  return(c(requests, expr))
                 }) |>
       unlist()
-
+    return(c(requests, sales))
   }
   return(requests)
 }
@@ -198,6 +214,7 @@ warp <- function(ship_select, waypoint_select, requests) {
   )
 
   requests <- purrr::map(ship_select, ~{
+    message(glue::glue("{.x} warping to {waypoint_select}"))
     endpoint <- gsub("SHIP_SELECT", .x, endpoint)
     expr <- substitute(
       send_request(method = "POST",

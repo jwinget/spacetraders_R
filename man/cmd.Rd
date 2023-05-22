@@ -4,7 +4,7 @@
 \alias{cmd}
 \title{Send command}
 \usage{
-cmd(endpoint = endpoint, method = method, requests = requests, ...)
+cmd(endpoint = endpoint, method = method, requests = requests)
 }
 \arguments{
 \item{endpoint}{Endpoint of the API to call. Use "VAR" to represent variables}

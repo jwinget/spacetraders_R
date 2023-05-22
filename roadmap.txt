@@ -9,3 +9,5 @@
   - UI fed by local DB, not by API calls
 * More granular control over ships and/or ship groupings
 * UI overhaul to display and control all of that stuff
+* Test multi-ship commands
+* Track & handle ship reactor cooldowns

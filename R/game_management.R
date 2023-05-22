@@ -226,11 +226,8 @@ process_stack <- function(requests = NULL, token, base_url, pool) {
   response <- eval(requests[[1]])
 
   if(!is.null(response$error$message)) {
-    message(glue::glue("Error: {response$error$message}"))
+    shiny::showNotification(glue::glue("Error: {response$error$message}"))
 
-    # Put this command at the back of the queue to re-try later
-    # warning: could lead to a buildup of crap commands
-    requests <- c(requests, requests[1])
   } else if (length(requests) > 0) {
   # Call appropriate db parse tool based on endpoint
     endpoint <- requests[[1]]$endpoint

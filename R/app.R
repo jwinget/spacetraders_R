@@ -64,43 +64,35 @@ server <- function(input, output, session) {
 
   #---- Inputs ----#
   observeEvent(input$orbit_button, {
-    message(glue::glue("{selected_ships()} cleared for departure"))
     stack(spacetraders::orbit(selected_ships(), stack())
     )
   })
 
   observeEvent(input$dock_button, {
-    message(glue::glue("{selected_ships()} entering Docking Bay {sample(1:10, 1)}"))
     stack(spacetraders::dock(selected_ships(), stack())
     )
   })
 
   observeEvent(input$refuel_button, {
-    message(glue::glue("Repleneshing fuel cells on {selected_ships()}"))
     stack(spacetraders::refuel(selected_ships(), stack())
     )
   })
 
   observeEvent(input$warp_button, {
-    message(glue::glue("{selected_ships()} warping to {selected_waypoint()}"))
     stack(spacetraders::warp(selected_ships(), selected_waypoint(), stack()))
   })
 
   observeEvent(input$extract_button, {
-    message(glue::glue("Extracting resources with {selected_ships()}"))
     stack(spacetraders::extract(selected_ships(), stack())
     )
   })
 
   observeEvent(input$deliver_button, {
-    message(glue::glue("Delivering contract resources from {selected_ships()}"))
     stack(spacetraders::deliver(selected_ships(), selected_contract(), cargo(), stack())
     )
   })
 
   observeEvent(input$sell_button, {
-    message(glue::glue("Selling {selected_ships()}'s cargo"))
-
     stack(spacetraders::sell(selected_ships(), cargo(), stack())
     )
   })

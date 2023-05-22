@@ -4,7 +4,7 @@
 \alias{deliver}
 \title{Deliver contract cargo}
 \usage{
-deliver(contract_select, requests)
+deliver(ship_select, contract_select, cargo, requests)
 }
 \arguments{
 \item{requests}{A vector of pending requests}

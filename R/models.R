@@ -100,12 +100,8 @@ parse_ships <- function(res, pool) {
       departure_type = res$nav$route$departure$type,
       destination_waypoint = res$nav$route$destination$symbol,
       destination_type = res$nav$route$destination$type,
-      arrival_time = res$nav$route$arrival |>
-        lubridate::as_datetime() |>
-        lubridate::seconds(),
-      departure_time = res$nav$route$departureTime |>
-        lubridate::as_datetime() |>
-        lubridate::seconds(),
+      arrival_time = res$nav$route$arrival,
+      departure_time = res$nav$route$departureTime,
       status = res$nav$status,
       flight_mode = res$nav$flightMode
       )
